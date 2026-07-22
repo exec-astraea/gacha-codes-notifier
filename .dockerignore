@@ -1,0 +1,8 @@
+# Build context is ./app. Keep only what the build needs (go files + go.mod/sum).
+hoyo-codes
+Dockerfile
+data/
+config.yaml
+config.example.yaml
+*.md
+.gitignore

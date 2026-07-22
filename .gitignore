@@ -1,0 +1,6 @@
+# live config (holds webhook URLs)
+config.yaml
+# runtime state (sent.json)
+/data/
+# local build artifact (binary from `go build`)
+/hoyo-codes

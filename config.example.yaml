@@ -1,0 +1,61 @@
+# hoyo-codes configuration.
+#
+# Copy to config.yaml (gitignored — it holds your webhook URLs) and edit:
+#   cp config.example.yaml config.yaml
+# docker-compose mounts ./config.yaml into the container read-only.
+
+# How often to check for new codes. Standard 5-field cron.
+schedule: "*/30 * * * *"
+
+# IANA timezone the schedule runs in (e.g. "Europe/Amsterdam"). Optional;
+# defaults to the container's TZ. Only affects cron timing.
+timezone: "Europe/Amsterdam"
+
+# On a game's FIRST run (no prior state), record all currently-active codes as
+# already-sent instead of announcing them. true (default) prevents spamming the
+# whole backlog of old codes on first boot. Set false to announce the backlog.
+markExistingOnFirstRun: true
+
+# Run one check immediately on startup, in addition to the schedule. Default true.
+runOnStart: true
+
+# Per-request HTTP timeout, seconds. Default 20.
+httpTimeout: 20
+
+# Cap on how many checks may fail to announce a given code before we give up on
+# it (mark it done without posting). Stops a persistently broken webhook or a bug
+# from retrying and log-spamming forever. Each failing check counts as one
+# attempt; a successful post resets nothing (the code is simply done). Default 10
+# (≈5h of retries on the default 30-min schedule).
+maxPostAttempts: 10
+
+# Games to watch. ONLY the games listed here are watched — to stop watching one,
+# comment it out or delete it (there's no enable/disable flag). Each listed game
+# REQUIRES both a `webhook` and a `message` (startup fails otherwise). Known keys:
+#   genshin (Genshin Impact), hsr (Honkai: Star Rail), zzz (Zenless Zone Zero),
+#   honkai3rd (Honkai Impact 3rd)
+games:
+  genshin:
+    webhook: "https://discord.com/api/webhooks/xxx/yyy"
+    # Placeholders: {count} = number of new codes. {if-singular:X}/{if-plural:X}
+    # keep X only when count is 1 / not 1 (the other is dropped) — handles
+    # irregular plurals and other languages. To ping a role, drop its mention
+    # token into the message: <@&ROLE_ID>  (Dev Mode -> right-click role -> Copy ID).
+    message: "<@&000000000000000000> {count} new Genshin Impact {if-singular:code}{if-plural:codes} 🎁"
+    # Optional per-game sender identity. `username` overrides the sender name;
+    # `avatarUrl` is a public image URL (PNG/JPG/GIF) Discord fetches as the
+    # avatar. Omit either to fall back to the default name / the webhook's own
+    # avatar.
+    username: "Genshin Codes"
+    avatarUrl: "https://example.com/genshin-avatar.png"
+
+  hsr:
+    # Post Star Rail to a different channel, with its own sender name:
+    webhook: "https://discord.com/api/webhooks/aaa/bbb"
+    message: "<@&111111111111111111> Trailblazers — {count} new {if-singular:code}{if-plural:codes}!"
+    username: "Star Rail Codes"
+
+  # To stop watching a game, comment it out (or delete it) — only listed games run:
+  # honkai3rd:
+  #   webhook: "https://discord.com/api/webhooks/ccc/ddd"
+  #   message: "{count} new Honkai Impact 3rd {if-singular:code}{if-plural:codes}"
