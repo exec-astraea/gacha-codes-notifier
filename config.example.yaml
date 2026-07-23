@@ -29,11 +29,19 @@ httpTimeout: 20
 # (≈5h of retries on the default 30-min schedule).
 maxPostAttempts: 10
 
+# Base URL of a self-hosted OpenGachaCodes instance (read-only HTTP JSON API). It
+# supplements the built-in HoYoverse sources for the games it also serves
+# (genshin, hsr, zzz) and is the SOLE source for non-HoYo games like `wuwa`.
+# Leave empty/omit to disable it entirely. No trailing slash needed (trimmed).
+# It has no CORS/auth and refreshes ~every 30 min; call it server-side only.
+opengachaBaseUrl: "http://localhost:8413"
+
 # Games to watch. ONLY the games listed here are watched — to stop watching one,
 # comment it out or delete it (there's no enable/disable flag). Each listed game
 # REQUIRES both a `webhook` and a `message` (startup fails otherwise). Known keys:
 #   genshin (Genshin Impact), hsr (Honkai: Star Rail), zzz (Zenless Zone Zero),
-#   honkai3rd (Honkai Impact 3rd)
+#   honkai3rd (Honkai Impact 3rd), wuwa (Wuthering Waves)
+# `wuwa` is served ONLY by OpenGachaCodes, so it needs opengachaBaseUrl set above.
 games:
   genshin:
     webhook: "https://discord.com/api/webhooks/xxx/yyy"
@@ -59,3 +67,10 @@ games:
   # honkai3rd:
   #   webhook: "https://discord.com/api/webhooks/ccc/ddd"
   #   message: "{count} new Honkai Impact 3rd {if-singular:code}{if-plural:codes}"
+
+  # Wuthering Waves — codes come only from OpenGachaCodes, so opengachaBaseUrl
+  # (above) must be set for this game to work. Redeemed in-game (no web link).
+  # wuwa:
+  #   webhook: "https://discord.com/api/webhooks/eee/fff"
+  #   message: "<@&222222222222222222> {count} new Wuthering Waves {if-singular:code}{if-plural:codes} 🌊"
+  #   username: "Wuthering Waves Codes"

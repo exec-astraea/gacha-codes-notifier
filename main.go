@@ -75,7 +75,7 @@ func runCheck(cfg Config, watched []Game, state *State) {
 	dirty := false
 
 	for _, g := range watched {
-		codes, err := fetchCodes(g)
+		codes, err := fetchCodes(g, cfg.OpengachaBaseURL)
 		if err != nil {
 			log.Printf("[%s] fetch failed: %v", g.Key, err)
 			continue

@@ -37,6 +37,7 @@ type Config struct {
 	MarkExistingOnFirstRun bool                  // mark active backlog sent on a game's first run
 	HTTPTimeout            int                   // per-request HTTP timeout, seconds
 	MaxPostAttempts        int                   // give up announcing a code after this many failed checks
+	OpengachaBaseURL       string                // self-hosted OpenGachaCodes base URL ("" = source disabled)
 }
 
 // --- on-disk YAML shape ---
@@ -56,6 +57,7 @@ type fileConf struct {
 	MarkExistingOnFirstRun *bool               `yaml:"markExistingOnFirstRun"`
 	HTTPTimeout            int                 `yaml:"httpTimeout"`
 	MaxPostAttempts        int                 `yaml:"maxPostAttempts"`
+	OpengachaBaseURL       string              `yaml:"opengachaBaseUrl"`
 	Games                  map[string]gameConf `yaml:"games"`
 }
 
@@ -103,6 +105,7 @@ func loadConfig(path string) (Config, error) {
 		MarkExistingOnFirstRun: orBool(fc.MarkExistingOnFirstRun, true),
 		HTTPTimeout:            orInt(fc.HTTPTimeout, 20),
 		MaxPostAttempts:        orInt(fc.MaxPostAttempts, 10),
+		OpengachaBaseURL:       strings.TrimRight(strings.TrimSpace(fc.OpengachaBaseURL), "/"),
 		Notify:                 map[string]GameNotify{},
 	}
 	cfg.StateFile = filepath.Join(cfg.DataDir, "sent.json")
@@ -129,6 +132,14 @@ func loadConfig(path string) (Config, error) {
 		}
 		if strings.TrimSpace(gc.Message) == "" {
 			problems = append(problems, fmt.Sprintf("games.%s: message is required", key))
+		}
+		// A game with no reachable source (only OpenGachaCodes serves it, but no
+		// opengachaBaseUrl is set) can never produce codes — fail startup so the
+		// misconfiguration is loud rather than a silent no-op every check.
+		g := games[key]
+		opengachaUsable := g.Opengacha != "" && cfg.OpengachaBaseURL != ""
+		if g.Ennead == "" && g.Tori == "" && !opengachaUsable {
+			problems = append(problems, fmt.Sprintf("games.%s: only OpenGachaCodes serves this game — set opengachaBaseUrl to watch it", key))
 		}
 		cfg.Games = append(cfg.Games, key)
 		cfg.Notify[key] = GameNotify{

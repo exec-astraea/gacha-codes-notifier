@@ -1,14 +1,19 @@
 # hoyo-codes — agent guide
 
-A small Go service that watches for new **HoYoverse redemption codes** (Genshin
-Impact, Honkai: Star Rail, Honkai Impact 3rd) and posts them to **Discord
-webhooks** on a cron schedule. Docker-first, no database, no framework.
+A small Go service that watches for new gacha **redemption codes** (Genshin
+Impact, Honkai: Star Rail, Zenless Zone Zero, Honkai Impact 3rd, and Wuthering
+Waves) and posts them to **Discord webhooks** on a cron schedule. Docker-first,
+no database, no framework.
 
-Codes are pulled from two community APIs and merged/de-duplicated, so a hiccup on
-one source doesn't cause a miss:
+Codes are pulled from up to three APIs and merged/de-duplicated, so a hiccup on
+one source doesn't cause a miss. A source is skipped for any game it doesn't
+serve (empty slug), and it only errors when *every* attempted source fails:
 
-- [ennead.cc](https://api.ennead.cc/mihoyo) — `/<game>/codes`
-- [torikushiii/hoyoverse-api](https://github.com/torikushiii/hoyoverse-api) — `hoyo-codes.seria.moe`
+- [ennead.cc](https://api.ennead.cc/mihoyo) — `/<game>/codes` (HoYoverse only)
+- [torikushiii/hoyoverse-api](https://github.com/torikushiii/hoyoverse-api) — `hoyo-codes.seria.moe` (HoYoverse only)
+- **OpenGachaCodes** — self-hosted read-only API (`opengachaBaseUrl` config).
+  Supplements the HoYo games it also serves and is the **sole** source for
+  non-HoYo games like Wuthering Waves. Disabled when `opengachaBaseUrl` is unset.
 
 ## Layout
 
@@ -123,8 +128,9 @@ Advanced → **Developer Mode**, then right-click the role → **Copy ID**).
 
 ## How a check works (`runCheck`)
 
-1. For each watched game, `fetchCodes` queries **both** APIs and merges by
-   upper-cased code. One source failing is tolerated; both failing skips the game.
+1. For each watched game, `fetchCodes` queries **every source that serves it**
+   (empty-slug sources are skipped) and merges by upper-cased code. One source
+   failing is tolerated; only *all* attempted sources failing skips the game.
 2. New codes = fetched codes not in `data/sent.json`. They're marked sent
    immediately.
 3. First time a game is seen (no state), codes are **marked sent silently** when
@@ -169,7 +175,8 @@ are a fatal error, catching typos). `loadConfig` resolves the file into `Config`
 - Each game is self-contained (`GameNotify{Webhook, Message, Username, AvatarURL}`;
   `Username` defaults to `defaultUsername`, `AvatarURL` is optional). `loadConfig`
   collects validation problems and returns them together: fatal if no games are
-  configured, or any listed game is missing `webhook` or `message`.
+  configured, any listed game is missing `webhook` or `message`, or a listed game
+  has no reachable source (OpenGachaCodes-only with no `opengachaBaseUrl`).
 
 When adding a config knob: add it to `fileConf`, resolve/validate it in
 `loadConfig`, and document it in `config.example.yaml` and this file.
@@ -181,11 +188,22 @@ When adding a config knob: add it to `fileConf`, resolve/validate it in
 - **torikushiii** — `https://hoyo-codes.seria.moe/codes?game=<slug>`, slugs
   `genshin`, `hkrpg`, `nap`, `honkai3rd`. Shape: `{"codes":[{"code","rewards":"A*60;B*5"}]}`
   (active only). Rewards get normalized (`A*60;B*5` → `A ×60, B ×5`).
+- **OpenGachaCodes** — `<opengachaBaseUrl>/games/<slug>/codes`, slugs `genshin`,
+  `starrail`, `zenless`, `wuwa` (also endfield/nte, not yet in the registry).
+  Shape: a flat array `[{"code","rewards":["Astrite x50", ...]}]` (active only).
+  Self-hosted, no auth/CORS, GET-only, strict paths (no trailing slash). A `404`
+  is treated as "nothing to contribute" (not a source failure). Reward quantities
+  use ASCII `x`, not `×`; they're joined with `, ` as-is. `fetchOpengacha` lives
+  in `sources.go`; the base URL is `opengachaBaseUrl` in config.
 
 The internal key differs from the torikushiii slug for Star Rail (`hsr`/`hkrpg`)
-and Zenless (`zzz`/`nap`). Both slugs and reward-normalization live in `games.go` /
-`sources.go`. To add another game (e.g. Tears of Themis — ennead `tot` / tori `tot`),
-add one entry to the `games` map **and** to `gameOrder`; nothing else needs to change.
+and Zenless (`zzz`/`nap`). Per-source slugs live in `games.go`; a `Game` sets a
+slug to `""` for any source that doesn't serve it (e.g. `wuwa` has empty
+`Ennead`/`Tori` and is OpenGachaCodes-only), and `fetchCodes` skips empty-slug
+sources. To add another game, add one entry to the `games` map **and** to
+`gameOrder`; nothing else needs to change. A game whose only source is
+OpenGachaCodes **fails startup** if `opengachaBaseUrl` is unset (it could never
+produce codes) — a validation problem in `loadConfig`, like a missing webhook.
 
 ## Conventions
 
