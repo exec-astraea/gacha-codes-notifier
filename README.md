@@ -1,10 +1,11 @@
 # hoyo-codes
 
 Watches for new **gacha redemption codes** (Genshin Impact, Honkai: Star Rail,
-Zenless Zone Zero, Honkai Impact 3rd, and Wuthering Waves) and posts them to
-**Discord webhooks** on a schedule. Codes come from community HoYoverse APIs plus
-an optional self-hosted [OpenGachaCodes](config.example.yaml) instance
-(`opengachaBaseUrl`) — the sole source for non-HoYo games like Wuthering Waves.
+Zenless Zone Zero, Honkai Impact 3rd, Wuthering Waves, and Arknights: Endfield)
+and posts them to **Discord webhooks** on a schedule. Codes come from community
+HoYoverse APIs plus an optional self-hosted [OpenGachaCodes](config.example.yaml)
+instance (`opengachaBaseUrl`) — the sole source for non-HoYo games like Wuthering
+Waves and Arknights: Endfield.
 
 ## Run
 

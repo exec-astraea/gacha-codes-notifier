@@ -1,9 +1,9 @@
 # hoyo-codes — agent guide
 
 A small Go service that watches for new gacha **redemption codes** (Genshin
-Impact, Honkai: Star Rail, Zenless Zone Zero, Honkai Impact 3rd, and Wuthering
-Waves) and posts them to **Discord webhooks** on a cron schedule. Docker-first,
-no database, no framework.
+Impact, Honkai: Star Rail, Zenless Zone Zero, Honkai Impact 3rd, Wuthering Waves,
+and Arknights: Endfield) and posts them to **Discord webhooks** on a cron
+schedule. Docker-first, no database, no framework.
 
 Codes are pulled from up to three APIs and merged/de-duplicated, so a hiccup on
 one source doesn't cause a miss. A source is skipped for any game it doesn't
@@ -189,7 +189,7 @@ When adding a config knob: add it to `fileConf`, resolve/validate it in
   `genshin`, `hkrpg`, `nap`, `honkai3rd`. Shape: `{"codes":[{"code","rewards":"A*60;B*5"}]}`
   (active only). Rewards get normalized (`A*60;B*5` → `A ×60, B ×5`).
 - **OpenGachaCodes** — `<opengachaBaseUrl>/games/<slug>/codes`, slugs `genshin`,
-  `starrail`, `zenless`, `wuwa` (also endfield/nte, not yet in the registry).
+  `starrail`, `zenless`, `wuwa`, `endfield` (also `nte`, not yet in the registry).
   Shape: a flat array `[{"code","rewards":["Astrite x50", ...]}]` (active only).
   Self-hosted, no auth/CORS, GET-only, strict paths (no trailing slash). A `404`
   is treated as "nothing to contribute" (not a source failure). Reward quantities

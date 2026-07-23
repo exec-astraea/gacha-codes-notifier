@@ -40,8 +40,10 @@ opengachaBaseUrl: "http://localhost:8413"
 # comment it out or delete it (there's no enable/disable flag). Each listed game
 # REQUIRES both a `webhook` and a `message` (startup fails otherwise). Known keys:
 #   genshin (Genshin Impact), hsr (Honkai: Star Rail), zzz (Zenless Zone Zero),
-#   honkai3rd (Honkai Impact 3rd), wuwa (Wuthering Waves)
-# `wuwa` is served ONLY by OpenGachaCodes, so it needs opengachaBaseUrl set above.
+#   honkai3rd (Honkai Impact 3rd), wuwa (Wuthering Waves),
+#   endfield (Arknights: Endfield)
+# `wuwa` and `endfield` are served ONLY by OpenGachaCodes, so they need
+# opengachaBaseUrl set above.
 games:
   genshin:
     webhook: "https://discord.com/api/webhooks/xxx/yyy"
@@ -74,3 +76,10 @@ games:
   #   webhook: "https://discord.com/api/webhooks/eee/fff"
   #   message: "<@&222222222222222222> {count} new Wuthering Waves {if-singular:code}{if-plural:codes} 🌊"
   #   username: "Wuthering Waves Codes"
+
+  # Arknights: Endfield — also OpenGachaCodes-only (needs opengachaBaseUrl),
+  # redeemed in-game (no web link).
+  # endfield:
+  #   webhook: "https://discord.com/api/webhooks/ggg/hhh"
+  #   message: "<@&333333333333333333> {count} new Arknights: Endfield {if-singular:code}{if-plural:codes}"
+  #   username: "Endfield Codes"

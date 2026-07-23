@@ -16,7 +16,7 @@ type Game struct {
 
 // gameOrder is the canonical iteration order (the games map is unordered, and
 // config game keys should resolve deterministically).
-var gameOrder = []string{"genshin", "hsr", "zzz", "honkai3rd", "wuwa"}
+var gameOrder = []string{"genshin", "hsr", "zzz", "honkai3rd", "wuwa", "endfield"}
 
 // games is the registry of everything we know how to watch.
 var games = map[string]Game{
@@ -67,5 +67,15 @@ var games = map[string]Game{
 		Opengacha: "wuwa",
 		Color:     0x3AC8D4,
 		Redeem:    "", // Wuthering Waves redeems codes in-game (no public web page).
+	},
+	"endfield": {
+		Key:  "endfield",
+		Name: "Arknights: Endfield",
+		// Not a HoYoverse game — OpenGachaCodes-only, like wuwa.
+		Ennead:    "",
+		Tori:      "",
+		Opengacha: "endfield",
+		Color:     0xE8763A,
+		Redeem:    "", // Arknights: Endfield redeems codes in-game (no public web page).
 	},
 }
