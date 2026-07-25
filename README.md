@@ -1,4 +1,4 @@
-# hoyo-codes
+# gacha-codes-notifier
 
 Watches for new **gacha redemption codes** (Genshin Impact, Honkai: Star Rail,
 Zenless Zone Zero, Honkai Impact 3rd, Wuthering Waves, and Arknights: Endfield)
@@ -13,12 +13,12 @@ and Arknights: Endfield. See [Sources](#sources).
 ```sh
 cp config.example.yaml config.yaml    # then add your webhook(s) + messages
 
-docker build -t hoyo-codes .
-docker run -d --name hoyo-codes \
+docker build -t gacha-codes-notifier .
+docker run -d --name gacha-codes-notifier \
   -e TZ=Europe/Amsterdam \
   -v "$PWD/config.yaml:/app/config.yaml:ro" \
   -v "$PWD/data:/app/data" \
-  hoyo-codes
+  gacha-codes-notifier
 ```
 
 Or without Docker: `CONFIG_FILE=config.yaml go run .`
@@ -55,4 +55,4 @@ belongs to others:
 
 ## License
 
-[AGPL-3.0](LICENSE) © Alisa Frelia @exec-astraea.
+[AGPL-3.0](LICENSE) © Alisa Frelia [@exec-astraea](https://github.com/exec-astraea).
