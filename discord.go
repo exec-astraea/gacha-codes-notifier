@@ -13,18 +13,6 @@ import (
 	"time"
 )
 
-type embedField struct {
-	Name   string `json:"name"`
-	Value  string `json:"value"`
-	Inline bool   `json:"inline"`
-}
-
-type embed struct {
-	Title  string       `json:"title"`
-	Color  int          `json:"color"`
-	Fields []embedField `json:"fields,omitempty"`
-}
-
 type allowedMentions struct {
 	// Parse whitelists which mention types in `content` are allowed to ping.
 	Parse []string `json:"parse"`
@@ -34,51 +22,77 @@ type webhookPayload struct {
 	Username        string           `json:"username,omitempty"`
 	AvatarURL       string           `json:"avatar_url,omitempty"`
 	Content         string           `json:"content,omitempty"`
-	Embeds          []embed          `json:"embeds"`
 	AllowedMentions *allowedMentions `json:"allowed_mentions,omitempty"`
 }
 
-// Discord limits: 25 fields per embed, 10 embeds per message.
-const (
-	maxFieldsPerEmbed = 25
-	maxEmbedsPerMsg   = 10
-)
+// maxContentLen is Discord's per-message content limit (2000 characters). We
+// chunk on code boundaries so a code block is never split across messages.
+const maxContentLen = 2000
 
-// buildEmbed renders one game's newly-found codes into a Discord embed.
-func buildEmbed(g Game, codes []Code) embed {
-	fields := make([]embedField, 0, len(codes))
-	for _, c := range codes {
-		value := c.Rewards
-		if value == "" {
-			value = "Reward details unavailable"
-		}
-		if g.Redeem != "" {
-			url := strings.ReplaceAll(g.Redeem, "{code}", c.Code)
-			value += fmt.Sprintf("\n[Redeem →](%s)", url)
-		}
-		fields = append(fields, embedField{Name: c.Code, Value: value})
+// renderCode renders one code as a plain-text block. Masked links ([text](url))
+// do not render in normal message content — only in embeds — so the redeem URL
+// is written raw, wrapped in <> to suppress its link-preview card.
+func renderCode(g Game, c Code) string {
+	value := c.Rewards
+	if value == "" {
+		value = "Reward details unavailable"
 	}
+	block := fmt.Sprintf("**%s**\n%s", c.Code, value)
+	if g.Redeem != "" {
+		url := strings.ReplaceAll(g.Redeem, "{code}", c.Code)
+		block += fmt.Sprintf("\nRedeem: <%s>", url)
+	}
+	return block
+}
+
+// buildMessages renders a game's newly-found codes into one or more Discord
+// message bodies (plain text, no embeds), splitting on code boundaries so no
+// message exceeds maxContentLen. `header`, if non-empty, is the config message
+// (with any "<@&ROLE_ID>" ping) and leads the first message so mentions fire.
+func buildMessages(g Game, header string, codes []Code) []string {
 	plural := "code"
 	if len(codes) > 1 {
 		plural = "codes"
 	}
-	return embed{
-		Title:  fmt.Sprintf("🎁 New %s %s", g.Name, plural),
-		Color:  g.Color,
-		Fields: fields,
+	title := fmt.Sprintf("🎁 **New %s %s**", g.Name, plural)
+
+	var lead strings.Builder
+	if header != "" {
+		lead.WriteString(header)
+		lead.WriteString("\n")
 	}
+	lead.WriteString(title)
+
+	var msgs []string
+	cur := lead.String()
+	for _, c := range codes {
+		block := renderCode(g, c)
+		candidate := cur + "\n\n" + block
+		// Start a new message when appending would overflow — unless the current
+		// message is empty (an oversized lone block is sent as-is).
+		if len(candidate) > maxContentLen && cur != "" {
+			msgs = append(msgs, cur)
+			cur = block
+		} else {
+			cur = candidate
+		}
+	}
+	if cur != "" {
+		msgs = append(msgs, cur)
+	}
+	return msgs
 }
 
 // pluralRe matches {if-singular:TEXT} / {if-plural:TEXT} blocks. TEXT runs up to
 // the first "}", so it must not itself contain "}" (role mentions / emoji are fine).
 var pluralRe = regexp.MustCompile(`\{if-(singular|plural):([^}]*)\}`)
 
-// buildContent renders the message body posted above the embed. It expands
-// {count} to the number of new codes, then resolves count-conditional blocks:
-// {if-singular:X} keeps X only when count == 1, {if-plural:X} only when count != 1
-// (the other is dropped). This handles irregular plurals and non-English forms,
-// e.g. "{count} {if-singular:code}{if-plural:codes}". Any "<@&ROLE_ID>" token
-// pings, because this is the Discord message content (never an embed).
+// buildContent renders the config message that leads the first announcement. It
+// expands {count} to the number of new codes, then resolves count-conditional
+// blocks: {if-singular:X} keeps X only when count == 1, {if-plural:X} only when
+// count != 1 (the other is dropped). This handles irregular plurals and
+// non-English forms, e.g. "{count} {if-singular:code}{if-plural:codes}". Any
+// "<@&ROLE_ID>" token pings, because this becomes Discord message content.
 func buildContent(message string, count int) string {
 	s := strings.ReplaceAll(message, "{count}", strconv.Itoa(count))
 	plural := count != 1
@@ -92,33 +106,15 @@ func buildContent(message string, count int) string {
 	})
 }
 
-// postWebhook sends embeds to Discord, chunking to respect the 10-embeds and
-// 25-fields-per-embed limits. `username`/`avatarURL` set the sender identity on
-// every message (avatarURL "" leaves the webhook's configured avatar). `content`,
-// if non-empty, is set on the first message so any mentions in it ping (mentions
-// never ping from embeds).
-func postWebhook(webhookURL, username, avatarURL, content string, embeds []embed) error {
-	// Split any embed with too many fields into multiple embeds.
-	var normalized []embed
-	for _, e := range embeds {
-		if len(e.Fields) <= maxFieldsPerEmbed {
-			normalized = append(normalized, e)
-			continue
-		}
-		for i := 0; i < len(e.Fields); i += maxFieldsPerEmbed {
-			end := min(i+maxFieldsPerEmbed, len(e.Fields))
-			chunk := e
-			chunk.Fields = e.Fields[i:end]
-			normalized = append(normalized, chunk)
-		}
-	}
-
-	for i := 0; i < len(normalized); i += maxEmbedsPerMsg {
-		end := min(i+maxEmbedsPerMsg, len(normalized))
-		payload := webhookPayload{Username: username, AvatarURL: avatarURL, Embeds: normalized[i:end]}
-		// Only set content on the first message so a chunked send doesn't re-ping.
-		if i == 0 && content != "" {
-			payload.Content = content
+// postWebhook posts plain-text messages to Discord in order. `username`/
+// `avatarURL` set the sender identity on every message (avatarURL "" leaves the
+// webhook's configured avatar). Only the first message may ping: the config
+// header (the sole carrier of a "<@&ROLE_ID>" token) leads it, and allowed
+// mentions are enabled there alone so a chunked send never re-pings.
+func postWebhook(webhookURL, username, avatarURL string, messages []string) error {
+	for i, msg := range messages {
+		payload := webhookPayload{Username: username, AvatarURL: avatarURL, Content: msg}
+		if i == 0 {
 			payload.AllowedMentions = &allowedMentions{Parse: []string{"roles", "users", "everyone"}}
 		}
 		if err := postPayload(webhookURL, payload); err != nil {

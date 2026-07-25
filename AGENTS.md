@@ -38,9 +38,9 @@ This is a flat `package main`, one concern per file:
 | --------------- | ----------------------------------------------------------------------- |
 | `main.go`       | Startup, config load, cron loop, the per-check diff/announce.           |
 | `config.go`     | YAML config load (`gopkg.in/yaml.v3`) + resolution/validation.          |
-| `games.go`      | `games` registry: canonical key → per-source slugs, colour, redeem URL. |
+| `games.go`      | `games` registry: canonical key → per-source slugs, redeem URL.         |
 | `sources.go`    | Fetch + normalize from both upstream APIs, merge/de-dupe.               |
-| `discord.go`    | Build embeds, chunk to Discord limits, POST the webhook.                |
+| `discord.go`    | Render codes as plain text, chunk to 2000 chars, POST the webhook.      |
 | `state.go`      | `data/sent.json` load/save (atomic write).                              |
 | `util.go`       | Tiny shared helpers.                                                     |
 | `discord_test.go` | Unit test for `buildContent` (placeholder/plural expansion).          |
@@ -115,8 +115,8 @@ games:                          # only games listed here are watched
 
 ### Pinging a role
 
-To ping a role, put its mention token **in the game's `message`** — the message is
-the Discord message body, and mentions only ping from there (never from an embed):
+To ping a role, put its mention token **in the game's `message`** — the message
+leads the Discord message body, and mentions ping from there:
 
 ```yaml
 message: "<@&123456789012345678> {count} new codes!"   # pings a role
@@ -139,11 +139,14 @@ Advanced → **Developer Mode**, then right-click the role → **Copy ID**).
    **no** active codes on its first fetch is still seeded (`state.seed`) so the
    next fetch that finds codes is announced as new rather than re-treated as
    first-run backlog.
-4. New codes become one Discord embed (with a one-click **Redeem** link where the
-   game supports web redemption), posted to **that game's** webhook
+4. New codes are rendered as **plain-text** message(s) (with a raw **Redeem** URL
+   where the game supports web redemption), posted to **that game's** webhook
    (`cfg.Notify[key]`). `buildContent` expands `{count}` and resolves the
-   `{if-singular:X}`/`{if-plural:X}` blocks in the game's `message`, then sends it
-   as the message `content`; a `<@&ROLE_ID>` token pings from there.
+   `{if-singular:X}`/`{if-plural:X}` blocks in the game's `message` to form the
+   header; `buildMessages` prepends it to the rendered codes, splitting on code
+   boundaries so no message exceeds 2000 chars. A `<@&ROLE_ID>` token in the
+   header pings, and only the first message is allowed to (a chunked send never
+   re-pings).
 5. Codes are marked sent **only after their announce post succeeds** (state is
    saved once at the end of the check). A failed post leaves its codes unmarked,
    so the next check retries them — nothing reached Discord, so this re-tries
@@ -212,9 +215,12 @@ produce codes) — a validation problem in `loadConfig`, like a missing webhook.
   must define its own `webhook` and `message` (validated in `loadConfig`).
 - **Keep it dependency-light.** Stdlib plus `robfig/cron` and `yaml.v3` only.
   Don't pull in an HTTP or Discord SDK.
-- **Discord facts worth remembering:** mentions only ping from `content`, never
-  from an embed; limits are 25 fields/embed and 10 embeds/message — `discord.go`
-  chunks for both. Preserve that when editing.
+- **Discord facts worth remembering:** messages are plain `content` (no embeds).
+  Masked links (`[text](url)`) do **not** render in normal content — only in
+  embeds — so redeem URLs are written raw, wrapped in `<>` to suppress the
+  link-preview card. Content is capped at 2000 chars/message; `discord.go` chunks
+  on code boundaries. Mentions ping only from the first message. Preserve that
+  when editing.
 - **Runtime state** (`data/`) and the live `config.yaml` (holds webhooks) are
   gitignored; committed: source, `Dockerfile`, docs, and `config.example.yaml`.
 - **Container runs as uid/gid 1000** and writes only `/app/data`. Keep it non-root.
