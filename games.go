@@ -6,7 +6,7 @@ type Game struct {
 	Key       string // canonical internal key (GAMES env, state file)
 	Name      string // human display name
 	Ennead    string // slug for api.ennead.cc/mihoyo/<slug>/codes
-	Tori      string // slug for hoyo-codes.seria.moe/codes?game=<slug>
+	Seria     string // slug for hoyo-codes.seria.moe/codes?game=<slug>
 	Opengacha string // slug for <opengachaBaseUrl>/games/<slug>/codes ("" = not served there)
 	// Redeem is a web redemption URL template with {code} substituted,
 	// or "" when the game only supports in-game redemption.
@@ -23,7 +23,7 @@ var games = map[string]Game{
 		Key:       "genshin",
 		Name:      "Genshin Impact",
 		Ennead:    "genshin",
-		Tori:      "genshin",
+		Seria:     "genshin",
 		Opengacha: "genshin",
 		Redeem:    "https://genshin.hoyoverse.com/en/gift?code={code}",
 	},
@@ -31,7 +31,7 @@ var games = map[string]Game{
 		Key:       "hsr",
 		Name:      "Honkai: Star Rail",
 		Ennead:    "starrail",
-		Tori:      "hkrpg",    // torikushiii's slug for Star Rail
+		Seria:     "hkrpg",    // seriaati's slug for Star Rail
 		Opengacha: "starrail", // OpenGachaCodes slug for Star Rail
 		Redeem:    "https://hsr.hoyoverse.com/gift?code={code}",
 	},
@@ -39,7 +39,7 @@ var games = map[string]Game{
 		Key:       "zzz",
 		Name:      "Zenless Zone Zero",
 		Ennead:    "zenless",
-		Tori:      "nap",     // torikushiii's slug for Zenless Zone Zero
+		Seria:     "nap",     // seriaati's slug for Zenless Zone Zero
 		Opengacha: "zenless", // OpenGachaCodes slug for Zenless Zone Zero
 		Redeem:    "https://zenless.hoyoverse.com/redemption?code={code}",
 	},
@@ -47,18 +47,18 @@ var games = map[string]Game{
 		Key:       "honkai3rd",
 		Name:      "Honkai Impact 3rd",
 		Ennead:    "honkai",
-		Tori:      "honkai3rd",
+		Seria:     "honkai3rd",
 		Opengacha: "", // OpenGachaCodes doesn't serve Honkai Impact 3rd.
 		Redeem:    "", // Honkai Impact 3rd has no public web redemption page.
 	},
 	"wuwa": {
 		Key:  "wuwa",
 		Name: "Wuthering Waves",
-		// Not a HoYoverse game — the HoYo-only sources (ennead, tori) don't
+		// Not a HoYoverse game — the HoYo-only sources (ennead, seria) don't
 		// serve it, so its codes come solely from OpenGachaCodes. A source with
 		// an empty slug is skipped in fetchCodes.
 		Ennead:    "",
-		Tori:      "",
+		Seria:     "",
 		Opengacha: "wuwa",
 		Redeem:    "", // Wuthering Waves redeems codes in-game (no public web page).
 	},
@@ -67,7 +67,7 @@ var games = map[string]Game{
 		Name: "Arknights: Endfield",
 		// Not a HoYoverse game — OpenGachaCodes-only, like wuwa.
 		Ennead:    "",
-		Tori:      "",
+		Seria:     "",
 		Opengacha: "endfield",
 		Redeem:    "", // Arknights: Endfield redeems codes in-game (no public web page).
 	},

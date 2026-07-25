@@ -9,8 +9,10 @@ Codes are pulled from up to three APIs and merged/de-duplicated, so a hiccup on
 one source doesn't cause a miss. A source is skipped for any game it doesn't
 serve (empty slug), and it only errors when *every* attempted source fails:
 
-- [ennead.cc](https://api.ennead.cc/mihoyo) — `/<game>/codes` (HoYoverse only)
-- [torikushiii/hoyoverse-api](https://github.com/torikushiii/hoyoverse-api) — `hoyo-codes.seria.moe` (HoYoverse only)
+- [torikushiii/hoyoverse-api](https://github.com/torikushiii/hoyoverse-api) —
+  `api.ennead.cc/mihoyo/<game>/codes` (HoYoverse only)
+- [seriaati/hoyo-codes](https://github.com/seriaati/hoyo-codes) —
+  `hoyo-codes.seria.moe` (HoYoverse only)
 - **OpenGachaCodes** — self-hosted read-only API (`opengachaBaseUrl` config).
   Supplements the HoYo games it also serves and is the **sole** source for
   non-HoYo games like Wuthering Waves. Disabled when `opengachaBaseUrl` is unset.
@@ -202,9 +204,10 @@ When adding a config knob: add it to `fileConf`, resolve/validate it in
 
 ## Upstream APIs
 
-- **ennead** — `https://api.ennead.cc/mihoyo/<slug>/codes`, slugs `genshin`,
-  `starrail`, `zenless`, `honkai`. Shape: `{"active":[{"code","rewards":[...]}],"inactive":[...]}`.
-- **torikushiii** — `https://hoyo-codes.seria.moe/codes?game=<slug>`, slugs
+- **ennead** (torikushiii/hoyoverse-api) — `https://api.ennead.cc/mihoyo/<slug>/codes`,
+  slugs `genshin`, `starrail`, `zenless`, `honkai`.
+  Shape: `{"active":[{"code","rewards":[...]}],"inactive":[...]}`.
+- **seria** (seriaati/hoyo-codes) — `https://hoyo-codes.seria.moe/codes?game=<slug>`, slugs
   `genshin`, `hkrpg`, `nap`, `honkai3rd`. Shape: `{"codes":[{"code","rewards":"A*60;B*5"}]}`
   (active only). Rewards get normalized (`A*60;B*5` → `A ×60, B ×5`).
 - **OpenGachaCodes** — `<opengachaBaseUrl>/games/<slug>/codes`, slugs `genshin`,
@@ -215,10 +218,10 @@ When adding a config knob: add it to `fileConf`, resolve/validate it in
   use ASCII `x`, not `×`; they're joined with `, ` as-is. `fetchOpengacha` lives
   in `sources.go`; the base URL is `opengachaBaseUrl` in config.
 
-The internal key differs from the torikushiii slug for Star Rail (`hsr`/`hkrpg`)
+The internal key differs from the seria slug for Star Rail (`hsr`/`hkrpg`)
 and Zenless (`zzz`/`nap`). Per-source slugs live in `games.go`; a `Game` sets a
 slug to `""` for any source that doesn't serve it (e.g. `wuwa` has empty
-`Ennead`/`Tori` and is OpenGachaCodes-only), and `fetchCodes` skips empty-slug
+`Ennead`/`Seria` and is OpenGachaCodes-only), and `fetchCodes` skips empty-slug
 sources. To add another game, add one entry to the `games` map **and** to
 `gameOrder`; nothing else needs to change. A game whose only source is
 OpenGachaCodes **fails startup** if `opengachaBaseUrl` is unset (it could never

@@ -41,7 +41,7 @@ func getJSON(url string, out any) error {
 	return json.NewDecoder(resp.Body).Decode(out)
 }
 
-// fetchEnnead pulls active codes from api.ennead.cc.
+// fetchEnnead pulls active codes from api.ennead.cc (torikushiii/hoyoverse-api).
 func fetchEnnead(g Game) ([]Code, error) {
 	var resp struct {
 		Active []struct {
@@ -63,15 +63,15 @@ func fetchEnnead(g Game) ([]Code, error) {
 	return out, nil
 }
 
-// fetchTori pulls active codes from hoyo-codes.seria.moe (torikushiii).
-func fetchTori(g Game) ([]Code, error) {
+// fetchSeria pulls active codes from hoyo-codes.seria.moe (seriaati).
+func fetchSeria(g Game) ([]Code, error) {
 	var resp struct {
 		Codes []struct {
 			Code    string `json:"code"`
 			Rewards string `json:"rewards"` // "Primogem*60;Adventurer's Experience*5"
 		} `json:"codes"`
 	}
-	url := fmt.Sprintf("https://hoyo-codes.seria.moe/codes?game=%s", g.Tori)
+	url := fmt.Sprintf("https://hoyo-codes.seria.moe/codes?game=%s", g.Seria)
 	if err := getJSON(url, &resp); err != nil {
 		return nil, err
 	}
@@ -80,13 +80,13 @@ func fetchTori(g Game) ([]Code, error) {
 		if c.Code == "" {
 			continue
 		}
-		out = append(out, Code{Code: c.Code, Rewards: normalizeToriRewards(c.Rewards)})
+		out = append(out, Code{Code: c.Code, Rewards: normalizeSeriaRewards(c.Rewards)})
 	}
 	return out, nil
 }
 
-// normalizeToriRewards turns "A*60;B*5" into "A ×60, B ×5".
-func normalizeToriRewards(s string) string {
+// normalizeSeriaRewards turns "A*60;B*5" into "A ×60, B ×5".
+func normalizeSeriaRewards(s string) string {
 	if s == "" {
 		return ""
 	}
@@ -193,8 +193,8 @@ func fetchCodes(g Game, opengachaBase string) ([]Code, error) {
 	if g.Ennead != "" {
 		try("ennead", func() ([]Code, error) { return fetchEnnead(g) })
 	}
-	if g.Tori != "" {
-		try("tori", func() ([]Code, error) { return fetchTori(g) })
+	if g.Seria != "" {
+		try("seria", func() ([]Code, error) { return fetchSeria(g) })
 	}
 	if opengachaBase != "" && g.Opengacha != "" {
 		try("opengacha", func() ([]Code, error) { return fetchOpengacha(g, opengachaBase) })
