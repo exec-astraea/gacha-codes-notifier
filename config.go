@@ -16,11 +16,11 @@ const defaultUsername = "Hoyo Codes"
 // GameNotify is the notification config for one game: where to post, what to
 // say, and how the sender appears. Webhook and Message are required; Username
 // and AvatarURL are optional per-game overrides. To ping a role, include its
-// "<@&ROLE_ID>" token in Message — that is the Discord message body, so mentions
-// in it fire.
+// "<@&ROLE_ID>" token in Message — it leads the Discord message body, so
+// mentions in it fire.
 type GameNotify struct {
 	Webhook   string // Discord webhook URL for this game
-	Message   string // content text above the embed; supports {count}
+	Message   string // text leading the announcement; supports {count}
 	Username  string // Discord sender name (defaults to defaultUsername)
 	AvatarURL string // Discord sender avatar image URL ("" = webhook's own avatar)
 }

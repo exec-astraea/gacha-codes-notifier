@@ -115,8 +115,9 @@ func runCheck(cfg Config, watched []Game, state *State) {
 			log.Printf("[%s] first run: marked %d existing code(s) as sent", g.Key, len(fresh))
 		default:
 			nc := cfg.Notify[g.Key]
-			content := buildContent(nc.Message, len(fresh))
-			if err := postWebhook(nc.Webhook, nc.Username, nc.AvatarURL, content, []embed{buildEmbed(g, fresh)}); err != nil {
+			header := buildContent(nc.Message, len(fresh))
+			messages := buildMessages(g, header, fresh)
+			if err := postWebhook(nc.Webhook, nc.Username, nc.AvatarURL, messages); err != nil {
 				// Nothing reached Discord, so leave codes unmarked and retry them
 				// next check — but cap attempts so a persistently failing post
 				// (bad webhook, a bug) can't retry and log forever. A code that

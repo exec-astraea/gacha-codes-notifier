@@ -8,7 +8,6 @@ type Game struct {
 	Ennead    string // slug for api.ennead.cc/mihoyo/<slug>/codes
 	Tori      string // slug for hoyo-codes.seria.moe/codes?game=<slug>
 	Opengacha string // slug for <opengachaBaseUrl>/games/<slug>/codes ("" = not served there)
-	Color     int    // Discord embed colour
 	// Redeem is a web redemption URL template with {code} substituted,
 	// or "" when the game only supports in-game redemption.
 	Redeem string
@@ -26,7 +25,6 @@ var games = map[string]Game{
 		Ennead:    "genshin",
 		Tori:      "genshin",
 		Opengacha: "genshin",
-		Color:     0xF2C94C,
 		Redeem:    "https://genshin.hoyoverse.com/en/gift?code={code}",
 	},
 	"hsr": {
@@ -35,7 +33,6 @@ var games = map[string]Game{
 		Ennead:    "starrail",
 		Tori:      "hkrpg",    // torikushiii's slug for Star Rail
 		Opengacha: "starrail", // OpenGachaCodes slug for Star Rail
-		Color:     0x9B7BD8,
 		Redeem:    "https://hsr.hoyoverse.com/gift?code={code}",
 	},
 	"zzz": {
@@ -44,7 +41,6 @@ var games = map[string]Game{
 		Ennead:    "zenless",
 		Tori:      "nap",     // torikushiii's slug for Zenless Zone Zero
 		Opengacha: "zenless", // OpenGachaCodes slug for Zenless Zone Zero
-		Color:     0xFFD400,
 		Redeem:    "https://zenless.hoyoverse.com/redemption?code={code}",
 	},
 	"honkai3rd": {
@@ -53,7 +49,6 @@ var games = map[string]Game{
 		Ennead:    "honkai",
 		Tori:      "honkai3rd",
 		Opengacha: "", // OpenGachaCodes doesn't serve Honkai Impact 3rd.
-		Color:     0x4A9BE0,
 		Redeem:    "", // Honkai Impact 3rd has no public web redemption page.
 	},
 	"wuwa": {
@@ -65,7 +60,6 @@ var games = map[string]Game{
 		Ennead:    "",
 		Tori:      "",
 		Opengacha: "wuwa",
-		Color:     0x3AC8D4,
 		Redeem:    "", // Wuthering Waves redeems codes in-game (no public web page).
 	},
 	"endfield": {
@@ -75,7 +69,6 @@ var games = map[string]Game{
 		Ennead:    "",
 		Tori:      "",
 		Opengacha: "endfield",
-		Color:     0xE8763A,
 		Redeem:    "", // Arknights: Endfield redeems codes in-game (no public web page).
 	},
 }
