@@ -138,7 +138,7 @@ func loadConfig(path string) (Config, error) {
 		// misconfiguration is loud rather than a silent no-op every check.
 		g := games[key]
 		opengachaUsable := g.Opengacha != "" && cfg.OpengachaBaseURL != ""
-		if g.Ennead == "" && g.Tori == "" && !opengachaUsable {
+		if g.Ennead == "" && g.Seria == "" && !opengachaUsable {
 			problems = append(problems, fmt.Sprintf("games.%s: only OpenGachaCodes serves this game — set opengachaBaseUrl to watch it", key))
 		}
 		cfg.Games = append(cfg.Games, key)
