@@ -18,7 +18,7 @@ type Code struct {
 
 var httpClient = &http.Client{Timeout: 20 * time.Second}
 
-const userAgent = "hoyo-codes-notifier/1.0 (+https://github.com/exec-astraea/hoyo-codes)"
+const userAgent = "gacha-codes-notifier/1.0 (+https://github.com/exec-astraea/gacha-codes-notifier)"
 
 func getJSON(url string, out any) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
