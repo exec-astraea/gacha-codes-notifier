@@ -45,6 +45,8 @@ This is a flat `package main`, one concern per file:
 | `util.go`       | Tiny shared helpers.                                                     |
 | `discord_test.go` | Unit test for `buildContent` (placeholder/plural expansion).          |
 
+CI lives in `.github/workflows/` — see [CI](#ci).
+
 ## Build / run / verify
 
 All commands run from this directory.
@@ -67,6 +69,20 @@ only the immediate `runOnStart` check fires) and `markExistingOnFirstRun: false`
 
 After a `go build .` here, delete the stray `hoyo-codes` binary it drops
 (already gitignored).
+
+### CI
+
+Two GitHub Actions workflows, both in `.github/workflows/`:
+
+| Workflow             | Runs on                              | Does                                    |
+| -------------------- | ------------------------------------ | --------------------------------------- |
+| `test.yml`           | pushes to `main`, **every** PR       | gofmt gate, build, vet, `go test -race`. |
+| `docker-publish.yml` | pushes to `main`, `v*` tags          | builds and pushes the image to ghcr.io.  |
+
+`test.yml` takes its Go version from `go.mod` (`go-version-file`), so bumping the
+module bumps CI too. The gofmt step fails the build on any misformatted file —
+`gofmt -l` alone always exits 0, so it checks for non-empty output explicitly.
+Run the same gate locally before pushing (the one-liner above).
 
 ## Configuration reference
 
